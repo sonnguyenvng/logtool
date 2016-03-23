@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                http://www.springframework.org/schema/mvc
+                http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+                http://www.springframework.org/schema/task
+                http://www.springframework.org/schema/task/spring-task-4.0.xsd
+                http://www.springframework.org/schema/context
+                http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+    <!-- import the dataSource definition -->
+
+
+    <!-- Activates scanning of @Autowired -->
+    <context:annotation-config/>
+
+    <!-- Activates scanning of @Repository and @Service -->
+    <context:component-scan base-package="com.vng.teg.logtool.web"/>
+
+    <mvc:annotation-driven content-negotiation-manager="contentManager"/>
+    <bean id="contentManager"
+          class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">
+        <property name="favorPathExtension" value="true"/>
+        <property name="ignoreAcceptHeader" value="true" />
+        <property name="parameterName" value="mediaType" />
+        <property name="defaultContentType" value="application/json" />
+        <property name="useJaf" value="false"/>
+        <property name="mediaTypes">
+            <map>
+                <entry key="json" value="application/json" />
+            </map>
+        </property>
+    </bean>
+
+    <bean id="propertyFactory" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath:logtool.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="validatorFactory"
+          class="javax.validation.Validation"
+          factory-method="buildDefaultValidatorFactory" />
+
+    <bean id="validator"
+          factory-bean="validatorFactory"
+          factory-method="getValidator" />
+
+    <bean id="messageSource"
+          class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+          <!--class="org.springframework.context.support.ResourceBundleMessageSource">-->
+        <property name="basename" value="WEB-INF/classes/messages/messages"/>
+        <property name="defaultEncoding" value="UTF-8" />
+        <property name="fileEncodings" value="UTF-8" />
+    </bean>
+
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="-1"/>
+    </bean>
+
+    <task:annotation-driven executor="executor" scheduler="scheduler" />
+
+    <task:executor id="executor" pool-size="1"/>
+
+    <task:scheduler id="scheduler" pool-size="1" />
+
+</beans>
