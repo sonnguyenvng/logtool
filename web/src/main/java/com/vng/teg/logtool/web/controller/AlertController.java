@@ -42,12 +42,12 @@ public class AlertController extends ApplicationObjectSupport {
         String nominalTimeFormat = "";
         try {
             Util util = new Util();
-            String urlJob = "http://localhost:11000/oozie/v2/job/" + actionId + "?show=info&timezone=GMT";
+            String urlJob = "http://10.60.43.7:11000/oozie/v2/job/" + actionId + "?show=info&timezone=GMT";
             dataJob = util.getHttpClient(urlJob);
             JSONObject jsJob = (JSONObject) new JSONParser().parse(String.valueOf(dataJob));
             total = (Long) jsJob.get("total");
 
-            String urlJobChild = "http://localhost:11000/oozie/v2/job/" + actionId + "@" + total + "?show=info&timezone=GMT";
+            String urlJobChild = "http://10.60.43.7:11000/oozie/v2/job/" + actionId + "@" + total + "?show=info&timezone=GMT";
             dataJobChild = util.getHttpClient(urlJobChild);
             JSONObject jsJobChild = (JSONObject) new JSONParser().parse(String.valueOf(dataJobChild));
             nominalTime = (String) jsJobChild.get("nominalTime");
