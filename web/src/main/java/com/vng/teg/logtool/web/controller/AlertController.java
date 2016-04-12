@@ -34,7 +34,7 @@ public class AlertController extends ApplicationObjectSupport {
     public String alert(@RequestParam(value = "actionId", required = false) String actionId, HttpServletResponse response) {
         String dataJob = "";
         String dataJobChild = "";
-        long total = 0;
+        String parentId="";
         String nominalTime = "";
         String oldFormat = "EEE,dd MMM yyyy HH:mm:ss z";
         String newFormat = "yyyy-MM-dd HH:mm:ss";
@@ -45,10 +45,10 @@ public class AlertController extends ApplicationObjectSupport {
             String urlJob = "http://10.60.43.7:11000/oozie/v2/job/" + actionId + "?show=info&timezone=GMT";
             dataJob = util.getHttpClient(urlJob);
             JSONObject jsJob = (JSONObject) new JSONParser().parse(String.valueOf(dataJob));
-            total = (Long) jsJob.get("total");
+            parentId =(String) jsJob.get("parentId");
 
-            String urlJobChild = "http://10.60.43.7:11000/oozie/v2/job/" + actionId + "@" + total + "?show=info&timezone=GMT";
-            dataJobChild = util.getHttpClient(urlJobChild);
+            String urlJobParent = "http://10.60.43.7:11000/oozie/v2/job/" + parentId + "?show=info&timezone=GMT";
+            dataJobChild = util.getHttpClient(urlJobParent);
             JSONObject jsJobChild = (JSONObject) new JSONParser().parse(String.valueOf(dataJobChild));
             nominalTime = (String) jsJobChild.get("nominalTime");
 
