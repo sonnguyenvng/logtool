@@ -1,5 +1,9 @@
 package com.vng.teg.logtool.web.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -17,6 +21,16 @@ import java.util.TimeZone;
  * Created by tungpv on 28/03/2016.
  */
 public class Util {
+
+    public static String printPrettyObj(Object obj){
+        String jsString = gson.toJson(obj);
+        return printPretty(jsString);
+    }
+    public static String printPretty(String jsString){
+        JsonParser jp = new JsonParser();
+        JsonElement je = jp.parse(jsString);
+        return gson.toJson(je);
+    }
 
     public String getHttpClient(String url) throws IOException {
         HttpClient client = HttpClientBuilder.create().build();
@@ -57,4 +71,6 @@ public class Util {
         }
         return dateResult;
     }
+
+    private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 }
