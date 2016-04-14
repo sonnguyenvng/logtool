@@ -5,4 +5,5 @@ package com.vng.teg.logtool.common;
  */
 public class Constants {
     public static final String OOZIE_API_URL = "oozie.api.url";
+    public static final String CONFIG_DIR = "config.dir";
 }

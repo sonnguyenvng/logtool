@@ -1,23 +1,52 @@
 package com.vng.teg.logtool.web.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.vng.teg.logtool.common.Constants;
+import com.vng.teg.logtool.web.util.Props;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.context.support.ApplicationObjectSupport;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by sonnguyen on 22/03/2016.
  */
 @RestController
 public class AlertController extends ApplicationObjectSupport {
+    @RequestMapping(value="/public/reload", method = RequestMethod.GET)
+    protected String reload(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        System.out.println(propertyFactory.getObject().getProperty("abc"));
+        propertyFactory.afterPropertiesSet();
+
+        List<String> outList = new ArrayList<String>();
+        Props.get().reload();
+        for(Object p: Props.get().keySet()){
+            outList.add(p + " = " + Props.get().get(p));
+        }
+        for(Map.Entry<String, Properties> entry:Props.get().getPropertiesMap().entrySet() ){
+            outList.add("");
+            outList.add("----------------- " + entry.getKey() + " --------------------");
+            for(Object p: entry.getValue().keySet()){
+                outList.add(p + " = " + entry.getValue().get(p));
+            }
+        }
+        return gson.toJson(propertyFactory.getObject());
+    }
     @RequestMapping(value = "/public/hello", method= RequestMethod.GET)
     public String hello() {
         return "abc";
@@ -73,6 +102,10 @@ public class AlertController extends ApplicationObjectSupport {
 
     }
 
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
     @Autowired
     private PropertiesFactoryBean propertyFactory;
+    @Autowired
+    private PropertyPlaceholderConfigurer propertyConfigurer;
 }
