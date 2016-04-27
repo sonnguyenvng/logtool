@@ -9,6 +9,7 @@
 
     <http pattern="/public/*" security="none"/>
     <http pattern="/public/*/*" security="none"/>
+    <http pattern="/public/*/*/*" security="none"/>
 
     <security:http realm="Protected API" use-expressions="true" auto-config="false" create-session="stateless"
                    entry-point-ref="customAuthenticationEntryPoint">

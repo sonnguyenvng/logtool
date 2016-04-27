@@ -14,6 +14,7 @@
                 http://www.springframework.org/schema/context/spring-context-4.0.xsd">
 
     <!-- import the dataSource definition -->
+    <import resource="jms.xml"/>
 
 
     <!-- Activates scanning of @Autowired -->
@@ -44,11 +45,6 @@
                 <value>file:/home/sonnguyen/logtool/web/conf/*.properties</value>
             </list>
         </property>
-    </bean>
-
-    <bean id="propertyConfigurer"
-          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="properties" ref="propertyFactory"/>
     </bean>
 
     <bean id="validatorFactory"
