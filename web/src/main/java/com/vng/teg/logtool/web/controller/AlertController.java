@@ -8,6 +8,8 @@ import com.vng.teg.logtool.common.util.DBUtil;
 import com.vng.teg.logtool.common.util.EmailUtil;
 import com.vng.teg.logtool.common.util.TimestampUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.support.ApplicationObjectSupport;
@@ -125,37 +127,40 @@ public class AlertController extends ApplicationObjectSupport {
         String newFormat = "yyyy-MM-dd";
         String setTimeZone = "Asia/Ho_Chi_Minh";
         String nominalTimeFormat = "";
+        System.out.println(String.format("\t\t %s, %s, %s", gc, wfId, status));
         try {
-            /*String prefixURL = propertyFactory.getObject().getProperty(Constants.OOZIE_API_URL);
-            Util util = new Util();
-            String urlJob = prefixURL + "/v2/job/" + wfId + "?show=info&timezone=GMT";
-            dataJob = util.getHttpClient(urlJob);
-            System.out.println(String.format("%s\n%s", urlJob, Util.printPrettyObj(dataJob)));
-            JSONObject jsJob = (JSONObject) new JSONParser().parse(String.valueOf(dataJob));
-            parentId =(String) jsJob.get("parentId");
+            if(StringUtils.isNotBlank(gc) && StringUtils.isNotBlank(wfId) && "SUCCEEDED".equals(status)){
+                String prefixURL = propertyFactory.getObject().getProperty(Constants.OOZIE_API_URL);
+                Util util = new Util();
+                String urlJob = prefixURL + "/v2/job/" + wfId + "?show=info&timezone=GMT";
+                dataJob = util.getHttpClient(urlJob);
+                System.out.println(String.format("%s\n%s", urlJob, Util.printPrettyObj(dataJob)));
+                JSONObject jsJob = (JSONObject) new JSONParser().parse(String.valueOf(dataJob));
+                parentId =(String) jsJob.get("parentId");
 
-            String urlJobParent = prefixURL + "/v2/job/" + parentId + "?show=info&timezone=GMT";
-            dataJobChild = util.getHttpClient(urlJobParent);
-            System.out.println(String.format("%s\n%s", urlJobParent, Util.printPrettyObj(dataJobChild)));
-            JSONObject jsJobChild = (JSONObject) new JSONParser().parse(String.valueOf(dataJobChild));
-            nominalTime = (String) jsJobChild.get("nominalTime");
+                String urlJobParent = prefixURL + "/v2/job/" + parentId + "?show=info&timezone=GMT";
+                dataJobChild = util.getHttpClient(urlJobParent);
+                System.out.println(String.format("%s\n%s", urlJobParent, Util.printPrettyObj(dataJobChild)));
+                JSONObject jsJobChild = (JSONObject) new JSONParser().parse(String.valueOf(dataJobChild));
+                nominalTime = (String) jsJobChild.get("nominalTime");
 
-            nominalTimeFormat = util.customFormatDate(oldFormat, newFormat, setTimeZone, nominalTime);
+                nominalTimeFormat = util.customFormatDate(oldFormat, newFormat, setTimeZone, nominalTime);
 
-            System.out.println();
-            System.out.println(wfId + "\t" + nominalTimeFormat);
-            System.out.println();*/
+                System.out.println();
+                System.out.println(wfId + "\t" + nominalTimeFormat);
+                System.out.println();
 
-//            Map map = new HashMap();
-//            map.put(Constants.GAME_CODE, gc);
-//            map.put(Constants.LOG_DATE, "2016-04-25");
-//            jmsTemplate.convertAndSend("alertQueue", map);
+                Map map = new HashMap();
+                map.put(Constants.GAME_CODE, gc);
+                map.put(Constants.LOG_DATE, nominalTimeFormat);
+                jmsTemplate.convertAndSend("alertQueue", map);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        StringBuilder sb = new StringBuilder();
+        /*StringBuilder sb = new StringBuilder();
         sb.append("<html><head></head><body><table border=1><thead><tr><th>Log Type</th>");
         Connection mysqlConn = null;
         Statement statement = null;
@@ -176,12 +181,10 @@ public class AlertController extends ApplicationObjectSupport {
                 Set<String> dateSet = new HashSet<String>();
                 sb.append("<th>").append(dStr).append("</th><th>Latest ").append(dayAgo).append(" days Average</th><th>Percent</th> ");
                 for (int i = 1; i <= dayAgo; i++) {
-//                cal.add(Calendar.DATE, -1);
                     dStr = TimestampUtil.getDate(cal.getTime(), Constants.YYYY_MM_DD, -i);
                     dayList.add(dStr);
                     dateSet.add(dStr);
                     sb.append("<th>").append(dStr).append("</th>");
-//                sb.append("<th>").append(TimestampUtil.getDate(cal.getTime(), Constants.YYYY_MM_DD, 0)).append("</th>");
                 }
                 System.out.println(String.format("%s, %s", gc, logDate));
 
@@ -232,7 +235,6 @@ public class AlertController extends ApplicationObjectSupport {
                             String lType = resultSet.getString(1);
                             String lDate = resultSet.getString(2);
                             Integer count = resultSet.getInt(3);
-//                        System.out.println(String.format("%s, %s, %s", lType, lDate, count));
                             if(dataMap.containsKey(lType)){
                                 dataMap.get(lType).put(lDate, count);
                             }
@@ -277,17 +279,17 @@ public class AlertController extends ApplicationObjectSupport {
                 }
                 sb.append("</tbody></table></body></html>");
                 if(StringUtils.isNotBlank(recipients)){
-                    EmailUtil.sendEmail(propertyFactory.getObject(), Arrays.asList(recipients.split(";")), gc.toUpperCase() + " [" + logDate + "] to [", sb.toString(), null);
+                    EmailUtil.sendEmail(propertyFactory.getObject(), Arrays.asList(recipients.split(";")), gc.toUpperCase() + " [" + logDate + "]", sb.toString(), null);
                 }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
-//        return nominalTimeFormat;
+        return nominalTimeFormat;
 
-        return sb.toString();
+//        return sb.toString();
 
     }
 
