@@ -43,7 +43,7 @@ public class JMSService {
             if(StringUtils.isNotBlank(gc) && StringUtils.isNotBlank(logDate)){
                 int dayAgo = 5;
                 List<String> dayList = new ArrayList<String>();
-                Map<String, Map<String, Integer>> dataMap = new HashMap<String, Map<String, Integer>>();
+                Map<String, Map<String, Integer>> dataMap = new LinkedHashMap<String, Map<String, Integer>>();
 //                String logDate = "2016-04-25";
                 DateFormat df = new SimpleDateFormat(Constants.YYYY_MM_DD);
                 Calendar cal = Calendar.getInstance();
@@ -65,7 +65,10 @@ public class JMSService {
                 System.out.println(String.format("%s, %s", gc, logDate));
 
                 String connStr = propertyFactory.getObject().getProperty(Constants.DB_MYSQL_CONNECTION);
-                String recipients = propertyFactory.getObject().getProperty(Constants.ALERT_RECIPIENTS);
+                String recipients = propertyFactory.getObject().getProperty(gc + "." + Constants.ALERT_RECIPIENTS);
+                if(StringUtils.isBlank(recipients)){
+                    recipients = propertyFactory.getObject().getProperty(Constants.ALERT_RECIPIENTS);
+                }
                 System.out.println(connStr);
                 mysqlConn = DBUtil.createMySQLConnection(connStr);
 
@@ -86,9 +89,9 @@ public class JMSService {
                             String game = resultSet.getString(1);
                             String lType = resultSet.getString(2);
                             String alertType = resultSet.getString(3);
-                            System.out.println(String.format("%s, %s, %s", game, lType, alertType));
+//                            System.out.println(String.format("%s, %s, %s", game, lType, alertType));
                             if(!dataMap.containsKey(lType)){
-                                dataMap.put(lType, new HashMap<String, Integer>());
+                                dataMap.put(lType, new LinkedHashMap<String, Integer>());
                                 for (String s : dayList) {
                                     dataMap.get(lType).put(s, 0);
                                 }
@@ -118,8 +121,14 @@ public class JMSService {
                         }
                     }
                 }
+                Map<String, String> redList = new LinkedHashMap<String, String>();
+                Map<String, String> brownList = new LinkedHashMap<String, String>();
+                Map<String, String> blueList = new LinkedHashMap<String, String>();
+                Map<String, String> greenList = new LinkedHashMap<String, String>();
+                Map<String, String> orderList = new LinkedHashMap<String, String>();
+
                 for(String lType: dataMap.keySet()){
-                    Integer total = 0, avg = 0, percent = 100;
+                    Integer total = 0, avg = 0, percent = 0;
                     for(String dayStr: dayList){
                         if(dateSet.contains(dayStr)){
                             total+= dataMap.get(lType).get(dayStr);
@@ -129,32 +138,63 @@ public class JMSService {
                     Integer todayCount = dataMap.get(lType).get(logDate);
                     if(avg > 0){
                         percent = ((todayCount - avg) * 100) / avg;
-                        System.out.println(lType + "\t" + avg + "\t" + todayCount + "\t" + percent);
+//                        System.out.println(lType + "\t" + avg + "\t" + todayCount + "\t" + percent);
                     }
                     String color = "black";
                     if(Math.abs(percent) >= 50){
                         color = "red";
+                        redList.put(lType, color);
                     }else if(Math.abs(percent) >= 30){
                         color = "brown";
-                    }else if(percent > 0 && todayCount > 0 && avg == 0){
+                        brownList.put(lType, color);
+                    }else if(percent == 0 && todayCount > 0 && avg == 0){
                         color = "green";
+                        greenList.put(lType, color);
                     }else if(todayCount == 0 && avg == 0){
                         color = "blue";
+                        blueList.put(lType, color);
+                    }else {
+                        orderList.put(lType, color);
                     }
-                    sb.append("<tr><td style=\"color:").append(color).append("\">").append(lType).append("</td>");
 
                     dataMap.get(lType).put("avg", avg);
                     dataMap.get(lType).put("percent", percent);
-                    for(String dayStr: dayList){
+
+                    /*for(String dayStr: dayList){
                         if(dayStr.equals("percent")){
                             sb.append("<td>").append(dataMap.get(lType).get(dayStr)).append("% </td>");
                         }else{
                             sb.append("<td>").append(dataMap.get(lType).get(dayStr)).append("</td>");
                         }
-                    }
+                    }*/
                     sb.append("</tr>");
                 }
+                Map<String, String> orderedKeyList = new LinkedHashMap<String, String>();
+                orderedKeyList.putAll(redList);
+                orderedKeyList.putAll(brownList);
+                orderedKeyList.putAll(greenList);
+                orderedKeyList.putAll(blueList);
+                orderedKeyList.putAll(orderList);
+                for(String lType: orderedKeyList.keySet()){
+                    String color = orderedKeyList.get(lType);
+                    sb.append("<tr><td style=\"color:").append(color).append("\">").append(lType).append("</td>");
+                    System.out.println(lType + "\t\t" + color);
+                    for(String dayStr: dataMap.get(lType).keySet()){
+                        System.out.println("\t" + dayStr + "\t" + dataMap.get(lType).get(dayStr));
+                        if(dayStr.equals("percent")){
+                            sb.append("<td style=\"color:").append(color).append("\">").append(dataMap.get(lType).get(dayStr)).append("% </td>");
+                        }else if(logDate.equals(dayStr) || dayStr.equals("avg")) {
+                            sb.append("<td style=\"color:").append(color).append("\">").append(dataMap.get(lType).get(dayStr)).append("</td>");
+                        }else{
+                            sb.append("<td>").append(dataMap.get(lType).get(dayStr)).append("</td>");
+                        }
+                    }
+                }
                 sb.append("</tbody></table></body></html>");
+                System.out.println();
+                System.out.println();
+                System.out.println();
+                System.out.println(sb.toString());
                 if(StringUtils.isNotBlank(recipients)){
                     EmailUtil.sendEmail(propertyFactory.getObject(), Arrays.asList(recipients.split(";")), gc.toUpperCase() + " [" + logDate + "]", sb.toString(), null);
                 }

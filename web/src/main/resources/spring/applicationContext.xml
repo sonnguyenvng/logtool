@@ -42,7 +42,8 @@
         <property name="locations">
             <list>
                 <value>classpath:logtool.properties</value>
-                <value>file:/home/sonnguyen/logtool/web/conf/*.properties</value>
+                <value>file:/home/logworker/webservice_properties/*.properties</value>
+                <!--<value>file:/home/sonnguyen/logtool/web/conf/*.properties</value>-->
             </list>
         </property>
     </bean>

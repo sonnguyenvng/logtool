@@ -117,6 +117,7 @@ public class AlertController extends ApplicationObjectSupport {
     @RequestMapping(value = "/public/wf/notify/alllogs", method = RequestMethod.GET, produces = {"application/json"})
     public String alertAllLogs(@RequestParam(value = "wfId", required = false) String wfId,
                         @RequestParam(value = "gc", required = false) String gc,
+                        @RequestParam(value = "date", required = false) String dateStr,
                         @RequestParam(value = "status", required = false) String status,
                         HttpServletResponse response) {
         String dataJob = "";
@@ -129,22 +130,26 @@ public class AlertController extends ApplicationObjectSupport {
         String nominalTimeFormat = "";
         System.out.println(String.format("\t\t %s, %s, %s", gc, wfId, status));
         try {
-            if(StringUtils.isNotBlank(gc) && StringUtils.isNotBlank(wfId) && "SUCCEEDED".equals(status)){
-                String prefixURL = propertyFactory.getObject().getProperty(Constants.OOZIE_API_URL);
-                Util util = new Util();
-                String urlJob = prefixURL + "/v2/job/" + wfId + "?show=info&timezone=GMT";
-                dataJob = util.getHttpClient(urlJob);
-                System.out.println(String.format("%s\n%s", urlJob, Util.printPrettyObj(dataJob)));
-                JSONObject jsJob = (JSONObject) new JSONParser().parse(String.valueOf(dataJob));
-                parentId =(String) jsJob.get("parentId");
+            if(StringUtils.isNotBlank(gc) && "SUCCEEDED".equals(status)){
+                if(StringUtils.isNotBlank(wfId)){
+                    String prefixURL = propertyFactory.getObject().getProperty(Constants.OOZIE_API_URL);
+                    Util util = new Util();
+                    String urlJob = prefixURL + "/v2/job/" + wfId + "?show=info&timezone=GMT";
+                    dataJob = util.getHttpClient(urlJob);
+                    System.out.println(String.format("%s\n%s", urlJob, Util.printPrettyObj(dataJob)));
+                    JSONObject jsJob = (JSONObject) new JSONParser().parse(String.valueOf(dataJob));
+                    parentId =(String) jsJob.get("parentId");
 
-                String urlJobParent = prefixURL + "/v2/job/" + parentId + "?show=info&timezone=GMT";
-                dataJobChild = util.getHttpClient(urlJobParent);
-                System.out.println(String.format("%s\n%s", urlJobParent, Util.printPrettyObj(dataJobChild)));
-                JSONObject jsJobChild = (JSONObject) new JSONParser().parse(String.valueOf(dataJobChild));
-                nominalTime = (String) jsJobChild.get("nominalTime");
+                    String urlJobParent = prefixURL + "/v2/job/" + parentId + "?show=info&timezone=GMT";
+                    dataJobChild = util.getHttpClient(urlJobParent);
+                    System.out.println(String.format("%s\n%s", urlJobParent, Util.printPrettyObj(dataJobChild)));
+                    JSONObject jsJobChild = (JSONObject) new JSONParser().parse(String.valueOf(dataJobChild));
+                    nominalTime = (String) jsJobChild.get("nominalTime");
 
-                nominalTimeFormat = util.customFormatDate(oldFormat, newFormat, setTimeZone, nominalTime);
+                    nominalTimeFormat = util.customFormatDate(oldFormat, newFormat, setTimeZone, nominalTime);
+                }else if(StringUtils.isNotBlank(dateStr)){
+                    nominalTimeFormat = dateStr;
+                }
 
                 System.out.println();
                 System.out.println(wfId + "\t" + nominalTimeFormat);
