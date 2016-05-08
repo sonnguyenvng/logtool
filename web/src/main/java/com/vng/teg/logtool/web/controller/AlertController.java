@@ -7,6 +7,7 @@ import com.vng.teg.logtool.common.util.CommonUtil;
 import com.vng.teg.logtool.common.util.DBUtil;
 import com.vng.teg.logtool.common.util.EmailUtil;
 import com.vng.teg.logtool.common.util.TimestampUtil;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -14,13 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.support.ApplicationObjectSupport;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -34,6 +34,42 @@ import java.util.*;
  */
 @RestController
 public class AlertController extends ApplicationObjectSupport {
+    @RequestMapping(value = {"/public/alert/data/save"}, method= RequestMethod.POST)
+    public String saveConsultantProfile(HttpServletRequest request,
+                                               @RequestParam(value= "file", required = false) MultipartFile file) throws Exception{
+        ByteArrayInputStream stream = new   ByteArrayInputStream(file.getBytes());
+        String sql = IOUtils.toString(stream, "UTF-8");
+        if(StringUtils.isNotBlank(sql)){
+            Connection mysqlConn = null;
+            Statement statement = null;
+            ResultSet resultSet = null;
+            try {
+                String connStr = propertyFactory.getObject().getProperty(Constants.DB_MYSQL_CONNECTION);
+                System.out.println(connStr);
+                mysqlConn = DBUtil.createMySQLConnection(connStr);
+                if(mysqlConn != null) {
+                    statement = mysqlConn.createStatement();
+                    DBUtil.executeMySQL(statement, sql);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (resultSet != null) {
+                        resultSet.close();
+                    }
+                    if (statement != null) {
+                        statement.close();
+                    }
+                    if (mysqlConn != null) {
+                        mysqlConn.close();
+                    }
+                } catch (Exception ex) {}
+            }
+        }
+        return sql;
+    }
     @RequestMapping(value="/public/alert/reload", method = RequestMethod.GET)
     protected String reloadAlertConfig(HttpServletRequest request, HttpServletResponse response,
                                        @RequestParam(value= "gc", required = false) String gc) throws Exception {
@@ -119,6 +155,7 @@ public class AlertController extends ApplicationObjectSupport {
                         @RequestParam(value = "gc", required = false) String gc,
                         @RequestParam(value = "date", required = false) String dateStr,
                         @RequestParam(value = "status", required = false) String status,
+                        @RequestParam(value = "tz", required = false) String timezone,
                         HttpServletResponse response) {
         String dataJob = "";
         String dataJobChild = "";
@@ -126,7 +163,8 @@ public class AlertController extends ApplicationObjectSupport {
         String nominalTime = "";
         String oldFormat = "EEE,dd MMM yyyy HH:mm:ss z";
         String newFormat = "yyyy-MM-dd";
-        String setTimeZone = "Asia/Ho_Chi_Minh";
+//        String newTimeZone = "Asia/Ho_Chi_Minh";
+        String newTimeZone = StringUtils.isNotBlank(timezone)? timezone : "GMT";
         String nominalTimeFormat = "";
         System.out.println(String.format("\t\t %s, %s, %s", gc, wfId, status));
         try {
@@ -146,7 +184,7 @@ public class AlertController extends ApplicationObjectSupport {
                     JSONObject jsJobChild = (JSONObject) new JSONParser().parse(String.valueOf(dataJobChild));
                     nominalTime = (String) jsJobChild.get("nominalTime");
 
-                    nominalTimeFormat = util.customFormatDate(oldFormat, newFormat, setTimeZone, nominalTime);
+                    nominalTimeFormat = util.customFormatDate(oldFormat, newFormat, newTimeZone, nominalTime);
                 }else if(StringUtils.isNotBlank(dateStr)){
                     nominalTimeFormat = dateStr;
                 }
