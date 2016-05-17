@@ -14,7 +14,7 @@
                 http://www.springframework.org/schema/context/spring-context-4.0.xsd">
 
     <!-- import the dataSource definition -->
-    <import resource="jms.xml"/>
+    <!--<import resource="jms.xml"/>-->
 
 
     <!-- Activates scanning of @Autowired -->
@@ -67,5 +67,11 @@
     <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <property name="maxUploadSize" value="-1"/>
     </bean>
+
+    <task:annotation-driven executor="executor" scheduler="scheduler" />
+
+    <task:executor id="executor" pool-size="1"/>
+
+    <task:scheduler id="scheduler" pool-size="1" />
 
 </beans>

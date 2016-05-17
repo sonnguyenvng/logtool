@@ -4,6 +4,7 @@ package com.vng.teg.logtool.common;
  * Created by sonnguyen on 13/04/2016.
  */
 public class Constants {
+    public static final String NEXT_ALERT_DATE = "next_alert_date";
     public static final String FROM_DATE = "from_date";
     public static final String TO_DATE = "to_date";
     public static final String GAME_CODE = "game_code";
@@ -28,5 +29,8 @@ public class Constants {
 
     public static final String DB_ALERT_CONFIG_INSERT = "db.mysql.config.insert";
     public static final String DB_ALERT_CONFIG_QUERY = "db.mysql.config.query";
+    public static final String DB_ALERT_STATUS_QUERY = "db.mysql.status.query";
+    public static final String DB_ALERT_STATUS_INSERT = "db.mysql.status.insert";
+    public static final String DB_ALERT_STATUS_UPDATE = "db.mysql.status.update";
 
 }
