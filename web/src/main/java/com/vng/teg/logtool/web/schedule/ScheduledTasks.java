@@ -44,10 +44,12 @@ public class ScheduledTasks {
                     while (resultSet.next()) {
                         String gc = resultSet.getString(1);
                         String logDate = resultSet.getString(2);
-                        System.out.println(String.format("%s, %s", gc, logDate));
+                        String wfId = resultSet.getString(3);
+                        String coordId = resultSet.getString(4);
+                        System.out.println(String.format("%s, %s, %s, %s", gc, logDate, wfId, coordId));
 
                         StringBuilder sb = new StringBuilder();
-                        sb.append("<html><head></head><body><table border=1><thead><tr><th>Log Type</th>");
+                        sb.append("<html><head>wfId=").append(wfId).append("<br>coordId=").append(coordId).append("</head><body><table border=1><thead><tr><th>Log Type</th>");
 
                         if(StringUtils.isNotBlank(gc) && StringUtils.isNotBlank(logDate)){
                             int dayAgo = 5;

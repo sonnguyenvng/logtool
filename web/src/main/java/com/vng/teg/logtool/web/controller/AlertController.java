@@ -101,6 +101,8 @@ public class AlertController extends ApplicationObjectSupport {
                         renderData.put(Constants.GAME_CODE, gc);
                         renderData.put(Constants.FROM_DATE, nominalTimeFormat);
                         renderData.put(Constants.NEXT_ALERT_DATE, df.format(curCal.getTime()));
+                        renderData.put(Constants.WF_ID, StringUtils.defaultString(wfId, ""));
+                        renderData.put(Constants.COORD_ID, StringUtils.defaultString(parentId, ""));
                         String q = CommonUtil.renderMessage(qTemplate, renderData);
                         System.out.println(q);
                         statement = mysqlConn.createStatement();

@@ -9,6 +9,8 @@ public class Constants {
     public static final String TO_DATE = "to_date";
     public static final String GAME_CODE = "game_code";
     public static final String LOG_DATE = "log_date";
+    public static final String WF_ID = "wf_id";
+    public static final String COORD_ID = "coord_id";
     public static final String EMAIL_FROM = "mail.from";
 
     public static final String YYYYMMDD = "yyyyMMdd";
