@@ -45,6 +45,7 @@ public class AlertController extends ApplicationObjectSupport {
         String dataJob = "";
         String dataJobChild = "";
         String parentId="";
+        String wfName="";
         String nominalTime = "";
         String oldFormat = "EEE,dd MMM yyyy HH:mm:ss z";
         String newFormat = "yyyy-MM-dd";
@@ -67,6 +68,7 @@ public class AlertController extends ApplicationObjectSupport {
 //                    System.out.println(String.format("%s\n%s", urlJob, Util.printPrettyObj(dataJob)));
                     JSONObject jsJob = (JSONObject) new JSONParser().parse(String.valueOf(dataJob));
                     parentId =(String) jsJob.get("parentId");
+                    wfName =(String) jsJob.get("appName");
 
                     String urlJobParent = prefixURL + "/v2/job/" + parentId + "?show=info&timezone=GMT";
                     dataJobChild = util.getHttpClient(urlJobParent);

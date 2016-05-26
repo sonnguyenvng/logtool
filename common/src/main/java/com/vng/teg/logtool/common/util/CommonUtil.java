@@ -1,5 +1,10 @@
 package com.vng.teg.logtool.common.util;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,22 +43,15 @@ public class CommonUtil {
         matcher.appendTail(buffer);
         return buffer.toString();
     }
-    public static String getWebChannelZoneFromWebsite(String website){
-        return getWebChannelZoneFromWebsite(website, ";");
+    public static String printPrettyObj(Object obj){
+        String jsString = gson.toJson(obj);
+        return printPretty(jsString);
     }
-    public static String getWebChannelZoneFromWebsite(String website, String splitCharacter){
-        String web = "", ch = "", zone = "";
-        String[] webArray = website.split("_");
-        if(webArray.length > 0){
-            web = webArray[0];
-        }
-        if(webArray.length > 1){
-            ch = webArray[1];
-        }
-        if(webArray.length > 2){
-            zone = webArray[2];
-        }
-        return web + splitCharacter  + ch + splitCharacter + zone;
+    public static String printPretty(String jsString){
+        JsonParser jp = new JsonParser();
+        JsonElement je = jp.parse(jsString);
+        return gson.toJson(je);
     }
+    private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 }

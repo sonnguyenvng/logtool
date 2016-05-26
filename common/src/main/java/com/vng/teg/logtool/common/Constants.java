@@ -24,6 +24,7 @@ public class Constants {
     public static final String OOZIE_API_URL = "oozie.api.url";
     public static final String CONFIG_DIR = "config.dir";
     public static final String ALERT_RECIPIENTS = "alert.recipients";
+    public static final String ALERT_RECIPIENTS_LOGTEAM = "alert.recipients.logteam";
     public static final String DB_MYSQL_CONNECTION = "db.mysql.connection";
     public static final String DB_GAME_BASELINE_TYPE = "db.input.mysql.baseline.type";
     public static final String DB_MYSQL_COUNT_QUERY = "db.mysql.count.query";
@@ -34,5 +35,9 @@ public class Constants {
     public static final String DB_ALERT_STATUS_QUERY = "db.mysql.status.query";
     public static final String DB_ALERT_STATUS_INSERT = "db.mysql.status.insert";
     public static final String DB_ALERT_STATUS_UPDATE = "db.mysql.status.update";
+
+    public static final String ALERT_GAME_MORNING = "alert.games.morning";
+    public static final String ALERT_GAME_AFTERNOON = "alert.games.afternoon";
+    public static final String ALERT_GAME_EVENING = "alert.games.evening";
 
 }
