@@ -23,7 +23,7 @@ import java.util.*;
  */
 @Component
 public class ScheduledTasks {
-    @Scheduled(cron="30 11 * * * ?")
+    @Scheduled(cron="0 30 11 * * ?")
     public void reportAllGamesMorning() throws Exception {
         System.out.println("----------- reportAllGamesMorning ------------" + new Date());
         String morningGames = propertyFactory.getObject().getProperty(Constants.ALERT_GAME_MORNING);
