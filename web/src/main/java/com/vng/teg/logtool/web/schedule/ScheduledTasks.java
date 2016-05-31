@@ -91,6 +91,7 @@ public class ScheduledTasks {
                                     }
                                 }
                             }
+
                             qTemplate = propertyFactory.getObject().getProperty(Constants.DB_MYSQL_COUNT_QUERY);
 
                             if(StringUtils.isNotBlank(qTemplate)){
@@ -214,7 +215,7 @@ public class ScheduledTasks {
     }
     @Scheduled(fixedRate = 1500000)//30 minutes
     public void autoScan() throws Exception {
-        System.out.println("----------- start ------------");
+        System.out.println("----------- start ------------" + new Date());
         Map<String, String> renderData;
         String qTemplate;
         Connection mysqlConn = null;
@@ -234,7 +235,7 @@ public class ScheduledTasks {
                         String logDate = resultSet.getString(2);
                         String wfId = resultSet.getString(3);
                         String coordId = resultSet.getString(4);
-                        System.out.println(String.format("%s, %s, %s, %s", gc, logDate, wfId, coordId));
+                        System.out.println(String.format("\t---->\t%s, %s, %s, %s", gc, logDate, wfId, coordId));
 
                         StringBuilder sb = new StringBuilder();
                         sb.append("<html><head>wfId=").append(wfId).append("<br>coordId=").append(coordId).append("</head><body><table border=1><thead><tr><th>Log Type</th>");
@@ -258,7 +259,7 @@ public class ScheduledTasks {
                                 dateSet.add(dStr);
                                 sb.append("<th>").append(dStr).append("</th>");
                             }
-                            System.out.println(String.format("%s, %s", gc, logDate));
+//                            System.out.println(String.format("%s, %s", gc, logDate));
 
                             String recipients = propertyFactory.getObject().getProperty(gc + "." + Constants.ALERT_RECIPIENTS);
                             if(StringUtils.isBlank(recipients)){
@@ -272,10 +273,10 @@ public class ScheduledTasks {
                                 renderData = new HashMap<String, String>();
                                 renderData.put(Constants.GAME_CODE, gc);
                                 String q = CommonUtil.renderMessage(qTemplate, renderData);
-                                statement = mysqlConn.createStatement();
-                                resultSet = DBUtil.executeMySQLQuery(statement, q);
-                                while (resultSet.next()) {
-                                    String lType = resultSet.getString(2);
+                                Statement st = mysqlConn.createStatement();
+                                ResultSet rs = DBUtil.executeMySQLQuery(st, q);
+                                while (rs.next()) {
+                                    String lType = rs.getString(2);
                                     if(!dataMap.containsKey(lType)){
                                         dataMap.put(lType, new LinkedHashMap<String, Integer>());
                                         for (String s : dayList) {
@@ -283,6 +284,7 @@ public class ScheduledTasks {
                                         }
                                     }
                                 }
+                                st.close();
                             }
 
                             qTemplate = propertyFactory.getObject().getProperty(Constants.DB_MYSQL_COUNT_QUERY);
@@ -293,16 +295,17 @@ public class ScheduledTasks {
                                 renderData.put(Constants.TO_DATE, TimestampUtil.getDate(logDate, Constants.YYYY_MM_DD, 0));
                                 renderData.put(Constants.GAME_CODE, gc);
                                 String q = CommonUtil.renderMessage(qTemplate, renderData);
-                                statement = mysqlConn.createStatement();
-                                resultSet = DBUtil.executeMySQLQuery(statement, q);
-                                while (resultSet.next()) {
-                                    String lType = resultSet.getString(1);
-                                    String lDate = resultSet.getString(2);
-                                    Integer count = resultSet.getInt(3);
+                                Statement st = mysqlConn.createStatement();
+                                ResultSet rs = DBUtil.executeMySQLQuery(st, q);
+                                while (rs.next()) {
+                                    String lType = rs.getString(1);
+                                    String lDate = rs.getString(2);
+                                    Integer count = rs.getInt(3);
                                     if(dataMap.containsKey(lType)){
                                         dataMap.get(lType).put(lDate, count);
                                     }
                                 }
+                                st.close();
                             }
                             Map<String, String> redList = new LinkedHashMap<String, String>();
                             Map<String, String> brownList = new LinkedHashMap<String, String>();
@@ -375,9 +378,10 @@ public class ScheduledTasks {
                         renderData.put(Constants.FROM_DATE, logDate);
                         renderData.put(Constants.GAME_CODE, gc);
                         qTemplate = CommonUtil.renderMessage(qTemplate, renderData);
-                        statement = mysqlConn.createStatement();
-                        DBUtil.executeMySQL(statement, qTemplate);
-//                        System.out.println(qTemplate);
+                        Statement st = mysqlConn.createStatement();
+                        DBUtil.executeMySQL(st, qTemplate);
+                        st.close();
+                        System.out.println("updated " + qTemplate);
                     }
                 }
             }
@@ -391,7 +395,9 @@ public class ScheduledTasks {
                 if (mysqlConn != null) {
                     mysqlConn.close();
                 }
-            } catch (Exception ex) {}
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
