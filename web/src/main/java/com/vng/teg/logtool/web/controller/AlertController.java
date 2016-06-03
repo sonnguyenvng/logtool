@@ -9,6 +9,7 @@ import com.vng.teg.logtool.common.util.EmailUtil;
 import com.vng.teg.logtool.common.util.TimestampUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -213,12 +214,13 @@ public class AlertController extends ApplicationObjectSupport {
         return sb.toString();
     }
     @RequestMapping(value="/public/props/reload", method = RequestMethod.GET)
-    protected String reloadProps(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
-        System.out.println(propertyFactory.getObject().getProperty("abc"));
-        propertyFactory.afterPropertiesSet();
-
-        return gson.toJson(propertyFactory.getObject());
+    protected String reloadProps(HttpServletRequest request, HttpServletResponse response) {
+        try{
+            propertyFactory.afterPropertiesSet();
+            return gson.toJson(propertyFactory.getObject());
+        }catch (Exception e){
+            return ExceptionUtils.getStackTrace(e);
+        }
     }
     @RequestMapping(value = "/public/hello", method= RequestMethod.GET)
     public String hello() {
