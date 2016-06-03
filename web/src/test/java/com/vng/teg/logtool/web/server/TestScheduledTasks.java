@@ -16,6 +16,12 @@ public class TestScheduledTasks extends BaseServiceTest{
     public void testReportAllGames() throws Exception{
         scheduledTasks.reportAllGamesMorning();
     }
+
+    @Test
+    public void testAutoScan() throws Exception{
+        scheduledTasks.autoScan();
+    }
+
     @Autowired
     private ScheduledTasks scheduledTasks;
 }

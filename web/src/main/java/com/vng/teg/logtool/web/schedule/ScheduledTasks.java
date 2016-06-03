@@ -6,6 +6,8 @@ import com.vng.teg.logtool.common.util.DBUtil;
 import com.vng.teg.logtool.common.util.EmailUtil;
 import com.vng.teg.logtool.common.util.TimestampUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -213,9 +215,10 @@ public class ScheduledTasks {
         }
 
     }
-    @Scheduled(fixedRate = 1500000)//30 minutes
+    @Scheduled(fixedRate = 1500000)//25 minutes
     public void autoScan() throws Exception {
-        System.out.println("----------- start ------------" + new Date());
+        logger.info(String.format(" \t auto Scan started at [%s]", new Date()));
+//        System.out.println("----------- start ------------" + new Date());
         Map<String, String> renderData;
         String qTemplate;
         Connection mysqlConn = null;
@@ -230,12 +233,15 @@ public class ScheduledTasks {
 //                    System.out.println(qTemplate);
                     statement = mysqlConn.createStatement();
                     resultSet = DBUtil.executeMySQLQuery(statement, qTemplate);
+
                     while (resultSet.next()) {
                         String gc = resultSet.getString(1);
                         String logDate = resultSet.getString(2);
                         String wfId = resultSet.getString(3);
                         String coordId = resultSet.getString(4);
-                        System.out.println(String.format("\t---->\t%s, %s, %s, %s", gc, logDate, wfId, coordId));
+                        int reAlertCount = resultSet.getInt(5);
+                        logger.info(String.format("\t Found 1 alert [gc=%s, date=%s, wfId=%s, coordId=%s, reAlertCount=%s]", gc, logDate, wfId, coordId, reAlertCount));
+//                        System.out.println(String.format("\t---->\t%s, %s, %s, %s", gc, logDate, wfId, coordId));
 
                         StringBuilder sb = new StringBuilder();
                         sb.append("<html><head>wfId=").append(wfId).append("<br>coordId=").append(coordId).append("</head><body><table border=1><thead><tr><th>Log Type</th>");
@@ -312,7 +318,8 @@ public class ScheduledTasks {
                             Map<String, String> blueList = new LinkedHashMap<String, String>();
                             Map<String, String> greenList = new LinkedHashMap<String, String>();
                             Map<String, String> orderList = new LinkedHashMap<String, String>();
-
+                            boolean repeatAlert = false;
+                            String repeatLogType = "";
                             for(String lType: dataMap.keySet()){
                                 Integer total = 0, avg = 0, percent = 0;
                                 for(String dayStr: dayList){
@@ -324,6 +331,10 @@ public class ScheduledTasks {
                                 Integer todayCount = dataMap.get(lType).get(logDate);
                                 if(avg > 0){
                                     percent = ((todayCount - avg) * 100) / avg;
+                                    if(todayCount == 0 && reAlertCount <= 3){
+                                        repeatAlert = true;
+                                        repeatLogType = lType;
+                                    }
                                 }
                                 String color = "black";
                                 if(Math.abs(percent) >= 50){
@@ -368,25 +379,42 @@ public class ScheduledTasks {
                                 }
                             }
                             sb.append("</tbody></table></body></html>");
-                            if(StringUtils.isNotBlank(recipients)){
-                                EmailUtil.sendEmail(propertyFactory.getObject(), Arrays.asList(recipients.split(";")), "[LOG] " + gc.toUpperCase() + " [" + logDate + "]", sb.toString(), null);
+                            if(repeatAlert){
+                                qTemplate = propertyFactory.getObject().getProperty(Constants.DB_ALERT_STATUS_UPDATE_NEXT_ALERT);
+                                Calendar curCal = Calendar.getInstance();
+                                curCal.add(Calendar.MINUTE, 30);
+                                DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                renderData = new HashMap<String, String>();
+                                renderData.put(Constants.GAME_CODE, gc);
+                                renderData.put(Constants.FROM_DATE, logDate);
+                                renderData.put(Constants.NEXT_ALERT_DATE, df2.format(curCal.getTime()));
+                                qTemplate = CommonUtil.renderMessage(qTemplate, renderData);
+                                Statement st = mysqlConn.createStatement();
+                                DBUtil.executeMySQL(st, qTemplate);
+                                st.close();
+                                logger.info(String.format("\t Re-Alert [%s, %s] because of [%s = 0]\n\t-->\t%s", gc, logDate, repeatLogType, qTemplate));
+                            }else {
+                                if(StringUtils.isNotBlank(recipients)){
+                                    logger.info(String.format(" [%s, %s, %s] ", gc, logDate, EmailUtil.sendEmail(propertyFactory.getObject(), Arrays.asList(recipients.split(";")), "[LOG] " + gc.toUpperCase() + " [" + logDate + "]", sb.toString(), null)));
+                                }
+                                qTemplate = propertyFactory.getObject().getProperty(Constants.DB_ALERT_STATUS_UPDATE);
+                                renderData = new HashMap<String, String>();
+                                renderData.put(Constants.FROM_DATE, logDate);
+                                renderData.put(Constants.GAME_CODE, gc);
+                                qTemplate = CommonUtil.renderMessage(qTemplate, renderData);
+                                Statement st = mysqlConn.createStatement();
+                                DBUtil.executeMySQL(st, qTemplate);
+                                st.close();
+//                                System.out.println("updated " + qTemplate);
                             }
-                        }
 
-                        qTemplate = propertyFactory.getObject().getProperty(Constants.DB_ALERT_STATUS_UPDATE);
-                        renderData = new HashMap<String, String>();
-                        renderData.put(Constants.FROM_DATE, logDate);
-                        renderData.put(Constants.GAME_CODE, gc);
-                        qTemplate = CommonUtil.renderMessage(qTemplate, renderData);
-                        Statement st = mysqlConn.createStatement();
-                        DBUtil.executeMySQL(st, qTemplate);
-                        st.close();
-                        System.out.println("updated " + qTemplate);
+                        }
                     }
                 }
             }
         }catch (Exception ex){
-            ex.printStackTrace();
+//            ex.printStackTrace();
+            logger.error(ExceptionUtils.getMessage(ex));
         }finally {
             try {
                 if (statement != null) {
@@ -396,10 +424,13 @@ public class ScheduledTasks {
                     mysqlConn.close();
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+//                ex.printStackTrace();
+                logger.error(ExceptionUtils.getMessage(ex));
             }
         }
     }
+
+    private Logger logger = Logger.getLogger(ScheduledTasks.class);
 
     @Autowired
     private PropertiesFactoryBean propertyFactory;

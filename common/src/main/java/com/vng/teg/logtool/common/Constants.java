@@ -35,6 +35,7 @@ public class Constants {
     public static final String DB_ALERT_STATUS_QUERY = "db.mysql.status.query";
     public static final String DB_ALERT_STATUS_INSERT = "db.mysql.status.insert";
     public static final String DB_ALERT_STATUS_UPDATE = "db.mysql.status.update";
+    public static final String DB_ALERT_STATUS_UPDATE_NEXT_ALERT = "db.mysql.status.update.next_alert";
 
     public static final String ALERT_GAME_MORNING = "alert.games.morning";
     public static final String ALERT_GAME_AFTERNOON = "alert.games.afternoon";

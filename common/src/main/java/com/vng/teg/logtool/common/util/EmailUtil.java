@@ -17,7 +17,7 @@ import java.util.Properties;
  */
 public class EmailUtil {
 
-    public static void sendEmail(Properties properties, List<String> toList, String subject, String body, File attachedFile) throws Exception {
+    public static String sendEmail(Properties properties, List<String> toList, String subject, String body, File attachedFile) throws Exception {
 //        Properties properties = new Properties();
 
         // Setup mail server
@@ -66,7 +66,7 @@ public class EmailUtil {
 
         // Send message
         Transport.send(message);
-        System.out.println("Sent message successfully.... to " + toList);
+        return "Sent message successfully.... to " + toList;
     }
     public static void sendEmailWithInlineImages(Properties properties, List<String> toList, String subject, String body, List<File> imageFiles) throws Exception {
 //        Properties properties = new Properties();

@@ -9,6 +9,7 @@ import com.vng.teg.logtool.common.util.EmailUtil;
 import com.vng.teg.logtool.common.util.TimestampUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +53,8 @@ public class AlertController extends ApplicationObjectSupport {
 //        String newTimeZone = "Asia/Ho_Chi_Minh";
         String newTimeZone = StringUtils.isNotBlank(timezone)? timezone : "GMT";
         String nominalTimeFormat = "";
-        System.out.println(String.format("\t\t %s, %s, %s", gc, wfId, status));
+        logger.info(String.format("\t [%s, %s, %s]", gc, wfId, status));
+//        System.out.println(String.format("\t\t %s, %s, %s", gc, wfId, status));
         Map<String, String> renderData;
         String qTemplate;
         Connection mysqlConn = null;
@@ -81,9 +83,6 @@ public class AlertController extends ApplicationObjectSupport {
                     nominalTimeFormat = dateStr;
                 }
 
-                System.out.println();
-                System.out.println(wfId + "\t" + nominalTimeFormat);
-                System.out.println();
                 String connStr = propertyFactory.getObject().getProperty(Constants.DB_MYSQL_CONNECTION);
                 mysqlConn = DBUtil.createMySQLConnection(connStr);
                 if(mysqlConn != null) {
@@ -94,9 +93,6 @@ public class AlertController extends ApplicationObjectSupport {
                         DateFormat df = new SimpleDateFormat(newFormat);
                         Date d = df.parse(nominalTimeFormat);
                         cal.setTime(d);
-//                        curCal.set(Calendar.YEAR, cal.get(Calendar.YEAR));
-//                        curCal.set(Calendar.MONTH, cal.get(Calendar.MONTH));
-//                        curCal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH));
                         curCal.add(Calendar.MINUTE, 30);
                         df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                         renderData = new HashMap<String, String>();
@@ -106,16 +102,11 @@ public class AlertController extends ApplicationObjectSupport {
                         renderData.put(Constants.WF_ID, StringUtils.defaultString(wfId, ""));
                         renderData.put(Constants.COORD_ID, StringUtils.defaultString(parentId, ""));
                         String q = CommonUtil.renderMessage(qTemplate, renderData);
-                        System.out.println(q);
                         statement = mysqlConn.createStatement();
                         DBUtil.executeMySQL(statement, q);
+                        logger.info(String.format("\t [%s, %s]\n\t%s", gc, nominalTimeFormat, q));
                     }
                 }
-
-//                Map map = new HashMap();
-//                map.put(Constants.GAME_CODE, gc);
-//                map.put(Constants.LOG_DATE, nominalTimeFormat);
-//                jmsTemplate.convertAndSend("alertQueue", map);
             }
 
         } catch (Exception e) {
@@ -252,6 +243,8 @@ public class AlertController extends ApplicationObjectSupport {
     }
 
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    private Logger logger = Logger.getLogger(AlertController.class);
 
     @Autowired
     private PropertiesFactoryBean propertyFactory;
