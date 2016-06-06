@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -28,6 +29,15 @@ public class ScheduledTasks {
     @Scheduled(cron="0 30 11,14 * * ?")
     public void reportAllGamesMorning() throws Exception {
         System.out.println("----------- reportAllGamesMorning ------------" + new Date());
+        String morningGames = propertyFactory.getObject().getProperty(Constants.ALERT_GAME_MORNING);
+        String[] games = morningGames.split(";", -1);
+//        System.out.println(CommonUtil.printPrettyObj(games));
+        reportAllGames(games);
+
+    }
+    @Scheduled(cron="0 30 16 * * ?")
+    public void reportAllGamesAfternoon() throws Exception {
+        System.out.println("----------- reportAllGamesAfternoon ------------" + new Date());
         String morningGames = propertyFactory.getObject().getProperty(Constants.ALERT_GAME_MORNING);
         String[] games = morningGames.split(";", -1);
 //        System.out.println(CommonUtil.printPrettyObj(games));
@@ -230,7 +240,7 @@ public class ScheduledTasks {
             if(mysqlConn != null) {
                 qTemplate = propertyFactory.getObject().getProperty(Constants.DB_ALERT_STATUS_QUERY);
                 if(StringUtils.isNotBlank(qTemplate)){
-//                    System.out.println(qTemplate);
+                    System.out.println(qTemplate);
                     statement = mysqlConn.createStatement();
                     resultSet = DBUtil.executeMySQLQuery(statement, qTemplate);
 
@@ -240,11 +250,14 @@ public class ScheduledTasks {
                         String wfId = resultSet.getString(3);
                         String coordId = resultSet.getString(4);
                         int reAlertCount = resultSet.getInt(5);
+                        Timestamp modifiedDate = resultSet.getTimestamp(6);
                         logger.info(String.format("\t Found 1 alert [gc=%s, date=%s, wfId=%s, coordId=%s, reAlertCount=%s]", gc, logDate, wfId, coordId, reAlertCount));
 //                        System.out.println(String.format("\t---->\t%s, %s, %s, %s", gc, logDate, wfId, coordId));
 
                         StringBuilder sb = new StringBuilder();
-                        sb.append("<html><head>wfId=").append(wfId).append("<br>coordId=").append(coordId).append("</head><body><table border=1><thead><tr><th>Log Type</th>");
+                        sb.append("<html><head>wfId=").append(wfId).append("<br>coordId=").append(coordId)
+                                .append("<br>triggerTime=").append(modifiedDate.toString()).append("<br>reAlertCount=").append(reAlertCount)
+                                .append("</head><body><table border=1><thead><tr><th>Log Type</th>");
 
                         if(StringUtils.isNotBlank(gc) && StringUtils.isNotBlank(logDate)){
                             int dayAgo = 5;
@@ -331,7 +344,7 @@ public class ScheduledTasks {
                                 Integer todayCount = dataMap.get(lType).get(logDate);
                                 if(avg > 0){
                                     percent = ((todayCount - avg) * 100) / avg;
-                                    if(todayCount == 0 && reAlertCount <= 3){
+                                    if(todayCount == 0 && reAlertCount <= 5){
                                         repeatAlert = true;
                                         repeatLogType = lType;
                                     }
